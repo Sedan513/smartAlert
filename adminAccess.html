@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body class = "boddy" class="bg-primary">
+    <div class="container mt-5">
+        <h2 style="text-align: center;">Contact Information and Messages</h2>
+        <form  style="text-align: center;">
+            <div class="form-group">
+                <label class = "labelText" for="Phone">Phone Number To call:</label>
+                <input type="number" class="form-control" id="call" placeholder="Enter Phone Number">
+            </div>
+
+            <div class="form-group">
+                <label class = "labelText" for="Phone">Phone Number(s) to text:</label>
+                <input type="number" class="form-control" id="phone" placeholder="Enter Phone Number">
+            </div>
+
+            <div class="form-group" >
+                <label class = "labelText" for="message">Message to send:</label>
+                <textarea class="form-control" id="message" rows="1" placeholder="Enter your message"></textarea>
+            </div>
+
+            <div class="form-group" >
+                <label class = "labelText" for="email">Emails to Contact:</label>
+                <input type="email" class="form-control" id="email" placeholder="Enter your email">
+            </div>
+
+            <div class="container mt-5">
+                <form id="inputForm">
+                    <div class="form-group">
+                        <label class = "labelText" for="inputField">Input Field</label>
+                        <input type="text" class="form-control" id="inputField" name="inputField[]" placeholder="Enter something">
+                    </div>
+                    <div id="inputFieldsContainer"></div>
+                    <button type="button" class="btn btn-primary" id="addFieldButton">Add Input Field</button>
+                </form>
+            </div>
+            <div style="text-align: center;">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </form>
+    </div>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+
+    <script>
+        $(document).ready(function () {
+            // Counter for tracking the number of input fields
+            let fieldCount = 1;
+
+            // Function to add a new input field
+            function addInputField() {
+                const inputField = `
+                    <div class="form-group">
+                        <label for="inputField${fieldCount}">Input Field ${fieldCount}</label>
+                        <input type="text" class="form-control" id="inputField${fieldCount}" name="inputField[]" placeholder="Enter something">
+                    </div>
+                `;
+                $("#inputFieldsContainer").append(inputField);
+                fieldCount++;
+            }
+
+            // Event listener for the "Add Input Field" button
+            $("#addFieldButton").click(function () {
+                addInputField();
+            });
+
+            // Initially add one input field
+            addInputField();
+        });
+    </script>
+    </body>
+    </html>
+
+    
+    
+    
+    
+    
+</body>
+</html>
