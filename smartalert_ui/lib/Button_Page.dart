@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
+import 'package:smartalert_ui/location_api.dart';
+import 'package:smartalert_ui/protocol_display.dart';
 
 const startAlignment = Alignment.bottomLeft;
 const endAlignment = Alignment.topRight;
@@ -17,11 +19,13 @@ class ButtonPage extends StatefulWidget {
 class _ButtonPageState extends State<ButtonPage> {
   bool buttonPressed = false;
   LocationData? _locationData; // Store the location data here
+  List<dynamic>? protocolJson; // Store the json data here
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation(); // Call the function when the widget is initialized
+    _getProtocol(); // Call the function when the widget is initialized
   }
 
   void updateui() {
@@ -30,8 +34,8 @@ class _ButtonPageState extends State<ButtonPage> {
     });
   }
 
-  void _getCurrentLocation() async {
-    Location location = new Location();
+  Future<LocationData?> _getCurrentLocation() async {
+    Location location = Location();
 
     bool serviceEnabled;
     PermissionStatus permissionGranted;
@@ -40,7 +44,7 @@ class _ButtonPageState extends State<ButtonPage> {
     if (!serviceEnabled) {
       serviceEnabled = await location.requestService();
       if (!serviceEnabled) {
-        return;
+        return null;
       }
     }
 
@@ -48,7 +52,7 @@ class _ButtonPageState extends State<ButtonPage> {
     if (permissionGranted == PermissionStatus.denied) {
       permissionGranted = await location.requestPermission();
       if (permissionGranted != PermissionStatus.granted) {
-        return;
+        return null;
       }
     }
 
@@ -57,6 +61,18 @@ class _ButtonPageState extends State<ButtonPage> {
     setState(() {
       _locationData = locationData; // Update the location data
     });
+    return locationData;
+  }
+
+  void _getProtocol() async {
+    LocationData? loc = await _getCurrentLocation();
+
+    if (loc == null) {
+      throw "location could not be found";
+    }
+
+    protocolJson =
+        await LocationApi.requestProtocol(loc.latitude!, loc.longitude!);
   }
 
   @override
@@ -71,18 +87,14 @@ class _ButtonPageState extends State<ButtonPage> {
       ),
       child: Center(
         child: buttonPressed
-            ? const Text(
-                //Put trevor's file here
-                'Owner-generated prompt goes here',
-                style: TextStyle(color: Colors.white),
-              )
+            ? ProtocolScreen(infoMap: protocolJson!)
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (_locationData != null)
                     Text(
                       'Latitude: ${_locationData!.latitude}, Longitude: ${_locationData!.longitude}',
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                     ),
                   TextButton(
                     onPressed: updateui,

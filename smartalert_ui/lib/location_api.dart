@@ -4,34 +4,35 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-class Post {
-  final Map<String, dynamic>? json;
-
-  Post({this.json});
-
-  factory Post.fromJson(Map<String, dynamic> json) {
-    return Post(json: json);
-  }
-}
-
 class LocationApi {
-  final String locationBaseURI = '';
+  static const String locationBaseURI = '';
 
-  Future<Post> _getProtocol(double latitude, double longitude) async {
+  static Future<List<dynamic>> requestProtocol(
+      double latitude, double longitude) async {
     final Map<String, String> queryParams = {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
     };
 
-    final Uri uri =
-        Uri.parse(locationBaseURI).replace(queryParameters: queryParams);
+    // testing
+    List<dynamic> jsonDecoded = jsonDecode(
+        '[{"title":"Fire@Makerspace","protocol":[{"messages":["blah","ihatehophakcs"]},{"phone":["7325208969"]}]},{"title":"Flood@FastForwardU","protocol":[{"messages":["blah","ihatehophakcs"]},{"phone":["83323242342","fasdfasdf"]}]}]');
 
-    final response = await http.get(uri); // pass in lat and lon
+    print(jsonDecoded.length);
+    print(jsonDecoded[0]);
 
-    if (response.statusCode == 200) {
-      return Post.fromJson(json.decode(response.body));
-    } else {
-      throw Exception('Failed to load post');
-    }
+    return jsonDecoded;
   }
 }
+    // final Uri uri =
+    //     Uri.parse(locationBaseURI).replace(queryParameters: queryParams);
+
+    // final response = await http.get(uri); // pass in lat and lon
+
+    // if (response.statusCode == 200) {
+    //   return json.decode(response.body);
+    // } else {
+    //   throw Exception('Failed to load post');
+    // }
+//   }
+// }
