@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class LocationApi {
-  static const String locationBaseURI = '';
+  static const String locationBaseURI =
+      'https://smartalert-919c8c8f9220.herokuapp.com/locations';
 
   static Future<List<dynamic>> requestProtocol(
       double latitude, double longitude) async {
@@ -14,25 +13,22 @@ class LocationApi {
       'longitude': longitude.toString(),
     };
 
-    // testing
-    List<dynamic> jsonDecoded = jsonDecode(
-        '[{"title":"Fire@Makerspace","protocol":[{"messages":["blah","ihatehophakcs"]},{"phone":["7325208969"]}]},{"title":"Flood@FastForwardU","protocol":[{"messages":["blah","ihatehophakcs"]},{"phone":["83323242342","fasdfasdf"]}]}]');
+    final Uri uri = Uri.parse(locationBaseURI);
 
-    print(jsonDecoded.length);
-    print(jsonDecoded[0]);
+    final response = await http.post(
+      uri,
+      body: json.encode(queryParams), // Encode the parameters as JSON
+      headers: {
+        'Content-Type': 'application/json', // Set the content type to JSON
+      },
+    );
 
-    return jsonDecoded;
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      print('\n\n\n\n\n $data \n\n\n\n\n\n\n\n');
+      return data;
+    } else {
+      throw Exception('Failed to load data');
+    }
   }
 }
-    // final Uri uri =
-    //     Uri.parse(locationBaseURI).replace(queryParameters: queryParams);
-
-    // final response = await http.get(uri); // pass in lat and lon
-
-    // if (response.statusCode == 200) {
-    //   return json.decode(response.body);
-    // } else {
-    //   throw Exception('Failed to load post');
-    // }
-//   }
-// }

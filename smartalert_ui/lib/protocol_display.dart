@@ -15,25 +15,41 @@ class _ProtocolScreenState extends State<ProtocolScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.infoMap[0]['title']}'),
+        backgroundColor: Colors.black,
+        title: Text(
+          '${widget.infoMap[0]['name']}',
+          style: const TextStyle(color: Colors.white, fontSize: 30),
+        ),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 50.0), // Add spacing at the top
-          child: ListView.builder(
-            itemCount: widget.infoMap[0]['protocol'].length,
-            itemBuilder: (context, index) {
-              Map<String, dynamic> item = widget.infoMap[0]['protocol'][index];
-              if (item.keys.first == 'phone') {
-                print("\n\n\n phone: ${item.values.first}");
-                return ProtocolCallButton(phone: item.values.first.toString());
-              } else {
-                //if (item.keys.first == 'message') {
-                print("\n\n\n message: ${item.values.first}");
-                return ProtocolInstruction(
-                    message: item.values.first.toString());
-              }
-            },
+      body: Container(
+        decoration: BoxDecoration(color: Colors.black),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 50.0), // Add spacing at the top
+            child: ListView.builder(
+              itemCount: widget.infoMap[0]['message'].length +
+                  widget.infoMap[0]['phone_number'].length,
+              itemBuilder: (context, index) {
+                Map<String, dynamic> protocol = widget.infoMap[0];
+                if (index < protocol['message'].length) {
+                  // is a message
+                  return Container(
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 0.0),
+                      child: ProtocolInstruction(
+                          message: protocol['message'][index].toString()));
+                } else {
+                  // is a phone number
+                  return Container(
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 0.0),
+                      child: ProtocolCallButton(
+                          phone: protocol['phone_number']
+                                  [index - protocol['message'].length]
+                              .toString()));
+                }
+              },
+            ),
           ),
         ),
       ),
@@ -58,35 +74,37 @@ class ProtocolCallButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        // Add your button action here
-        _launchPhoneDialer();
-      },
-      child: ListTile(
-        title: Text(
-          'Dial $phone',
-          style: const TextStyle(
-            fontSize: 18, // Adjust the font size as needed
-            fontFamily: 'Verdana', // Replace with your desired font family
-            fontWeight: FontWeight.normal, // Adjust font weight as needed
-            color: Colors.blue, // Adjust text color as needed
+        onTap: () {
+          // Add your button action here
+          _launchPhoneDialer();
+        },
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: ListTile(
+            title: Text(
+              'Dial $phone',
+              style: const TextStyle(
+                fontSize: 18, // Adjust the font size as needed
+                fontFamily: 'Verdana', // Replace with your desired font family
+                fontWeight: FontWeight.normal, // Adjust font weight as needed
+                color: Colors.blue, // Adjust text color as needed
+              ),
+            ),
+            subtitle: const Text(
+              'Tap to dial',
+              style: TextStyle(
+                fontSize: 14, // Adjust the font size as needed
+                fontFamily: 'Verdana', // Replace with your desired font family
+                fontWeight: FontWeight.normal, // Adjust font weight as needed
+                color: Colors.grey, // Adjust text color as needed
+              ),
+            ),
+            leading: const Icon(
+              Icons.phone,
+              color: Colors.blue, // Adjust icon color as needed
+            ),
           ),
-        ),
-        subtitle: const Text(
-          'Tap to dial',
-          style: TextStyle(
-            fontSize: 14, // Adjust the font size as needed
-            fontFamily: 'Verdana', // Replace with your desired font family
-            fontWeight: FontWeight.normal, // Adjust font weight as needed
-            color: Colors.grey, // Adjust text color as needed
-          ),
-        ),
-        leading: const Icon(
-          Icons.phone,
-          color: Colors.blue, // Adjust icon color as needed
-        ),
-      ),
-    );
+        ));
   }
 }
 
@@ -103,9 +121,9 @@ class ProtocolInstruction extends StatelessWidget {
         fontSize: 22, // Adjust the font size as needed
         fontFamily: 'Verdana', // Replace with your desired font family
         fontWeight: FontWeight.normal, // Adjust font weight as needed
-        color: Colors.black, // Adjust text color as needed
+        color: Colors.white, // Adjust text color as needed
       ),
-      textAlign: TextAlign.left,
+      textAlign: TextAlign.center,
     );
   }
 }
