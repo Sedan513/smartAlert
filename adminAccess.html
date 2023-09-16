@@ -4,47 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.css">
 </head>
 <body class = "boddy" class="bg-primary">
-    <div class="container mt-5">
-        <h2 style="text-align: center;">Contact Information and Messages</h2>
-        <form  style="text-align: center;">
-            <div class="form-group">
-                <label class = "labelText" for="Phone">Phone Number To call:</label>
-                <input type="number" class="form-control" id="call" placeholder="Enter Phone Number">
-            </div>
+    <br>
+    <br>
+     <div class="container"  style="text-align: center;">
+        <a class="navbar-brand" href="#">
+            <img src="Logo.png" alt="Your Logo" width="300">
+        </a>
+</div>
 
-            <div class="form-group">
-                <label class = "labelText" for="Phone">Phone Number(s) to text:</label>
-                <input type="number" class="form-control" id="phone" placeholder="Enter Phone Number">
-            </div>
 
-            <div class="form-group" >
-                <label class = "labelText" for="message">Message to send:</label>
-                <textarea class="form-control" id="message" rows="1" placeholder="Enter your message"></textarea>
-            </div>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    Alert Settings
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="mb-3">
+                            <label class="form-label">Phone # to call</label>
+                            <input type="number" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label  class="form-label">Phone #(s) to text</label>
+                            <input type="number" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label  class="form-label">Text Message</label>
+                            <input type="text" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label  class="form-label">Emails to Message</label>
+                            <input type="email" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label  class="form-label">Email Message</label>
+                            <input type="text" class="form-control" id="password" name="password" required>
+                        </div>
 
-            <div class="form-group" >
-                <label class = "labelText" for="email">Emails to Contact:</label>
-                <input type="email" class="form-control" id="email" placeholder="Enter your email">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
             </div>
-
-            <div class="container mt-5">
-                <form id="inputForm">
-                    <div class="form-group">
-                        <label class = "labelText" for="inputField">Input Field</label>
-                        <input type="text" class="form-control" id="inputField" name="inputField[]" placeholder="Enter something">
-                    </div>
-                    <div id="inputFieldsContainer"></div>
-                    <button type="button" class="btn btn-primary" id="addFieldButton">Add Input Field</button>
-                </form>
-            </div>
-            <div style="text-align: center;">
-                <button type="submit" class="btn btn-primary">Submit</button>
-            </div>
-        </form>
+        </div>
     </div>
+</div>
+
+
+   
     
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
@@ -53,30 +64,33 @@
 
     <script>
         $(document).ready(function () {
-            // Counter for tracking the number of input fields
-            let fieldCount = 1;
+            // Function to generate input boxes based on user input
+            function generateInputBoxes() {
+                const numberOfInputs = parseInt($("#numberOfInputs").val());
+                const inputContainer = $("#inputContainer");
 
-            // Function to add a new input field
-            function addInputField() {
-                const inputField = `
-                    <div class="form-group">
-                        <label for="inputField${fieldCount}">Input Field ${fieldCount}</label>
-                        <input type="text" class="form-control" id="inputField${fieldCount}" name="inputField[]" placeholder="Enter something">
-                    </div>
-                `;
-                $("#inputFieldsContainer").append(inputField);
-                fieldCount++;
+                // Clear any existing input boxes
+                inputContainer.empty();
+
+                // Generate new input boxes
+                for (let i = 1; i <= numberOfInputs; i++) {
+                    inputContainer.append(
+                        `<div class="form-group">
+                            <label for="input${i}">Phone Number #${i}:</label>
+                            <input type="text" class="form-control" id="input${i}" name="input${i}">
+                        </div>`
+                    );
+                }
             }
 
-            // Event listener for the "Add Input Field" button
-            $("#addFieldButton").click(function () {
-                addInputField();
-            });
+            // Initial generation of input boxes
+            generateInputBoxes();
 
-            // Initially add one input field
-            addInputField();
+            // Update input boxes when the number changes
+            $("#numberOfInputs").on("input", generateInputBoxes);
         });
     </script>
+
     </body>
     </html>
 
