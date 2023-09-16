@@ -7,7 +7,58 @@
     <!-- Add Bootstrap CSS link -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- Google Maps API script with your API key -->
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=drawing"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ googlemaps_key }}&libraries=drawing"></script>
+	<script> function fillCard(protocolName, messages, phoneNumbers) {
+		// Get references to the span elements where you want to display values
+		var protocolNameSpan = document.getElementById("display-protocol-name");
+		var messagesList = document.getElementById("display-messages");
+		var phoneNumbersList = document.getElementById("display-phone-numbers");
+
+		// display the card
+		document.querySelector('#bottomend').style.display = 'block';
+	
+		// Set the values you want to display
+	
+		// Update the content of the span elements and lists
+		if (protocolNameSpan) {
+			protocolNameSpan.textContent = protocolName;
+		}
+	
+		// Fill the Messages list
+		if (messagesList) {
+			if (messagesList.hasChildNodes()) {
+				// Remove all the existing list items
+				while (messagesList.firstChild) {
+					messagesList.removeChild(messagesList.firstChild);
+				}
+			}
+			messages.forEach(function(message) {
+				var listItem = document.createElement("li");
+				listItem.textContent = message;
+				messagesList.appendChild(listItem);
+			});
+		}
+	
+		// Fill the Phone Numbers list
+		if (phoneNumbersList) {
+			if (phoneNumbersList.hasChildNodes()) {
+				// Remove all the existing list items
+				while (phoneNumbersList.firstChild) {
+					phoneNumbersList.removeChild(phoneNumbersList.firstChild);
+				}
+			}
+			phoneNumbers.forEach(function(phoneNumber) {
+				var listItem = document.createElement("li");
+				listItem.textContent = phoneNumber;
+				phoneNumbersList.appendChild(listItem);
+			});
+		}
+	}
+	var originalFillColor = '#FF0000';
+	var originalStrokeColor = '#FF0000';
+
+
+</script>
     
 
 </head>
@@ -54,10 +105,24 @@
                 </div>
             </div>
         </form>
+
+		<div id = "bottomend" class="card mt-3" style="display: none;">
+			<div class="card-body">
+				<h5 class="card-title">Protocol Information</h5>
+				<p class="card-text">
+					<strong>Protocol Name:</strong> <span id="display-protocol-name"></span><br>
+					<strong>Messages:</strong>
+					<ul id="display-messages"></ul><br>
+					<strong>Phone Numbers:</strong>
+					<ul id="display-phone-numbers"></ul>
+				</p>
+			</div>
+		</div>
     </div>
 
     <script>
         function initializeMap() {
+			var selectedPolygon = null;
             var map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: 39.3273, lng: -76.6221 },
                 zoom: 16
@@ -72,9 +137,9 @@
                         var polygonCoordinates = [];
     
                         // Convert the fetched data into LatLng objects
-                        polygonData.forEach(point => {
-                            polygonCoordinates.push(new google.maps.LatLng(point.lat, point.lng));
-                        });
+                        polygonData.polyregion.forEach(point => {
+							polygonCoordinates.push(new google.maps.LatLng(point.lat, point.lng));
+						});
     
                         // Create a polygon and set its path
                         var polygon = new google.maps.Polygon({
@@ -91,15 +156,61 @@
                         // Set the polygon on the map
                         polygon.setMap(map);
 						google.maps.event.addListener(polygon, 'click', function() {
+							//set as selected polygon
+							var requestData = {
+								location_id: polygonData.id // Replace with the actual location ID you want to send
+							};
+							
+							// Define the URL for the POST request
+							var url = '/get_protocol';
+							
+							// Create the fetch request
+							fetch(url, {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json'
+								},
+								body: JSON.stringify(requestData)
+							})
+							.then(response => response.json())
+							.then(data => {
+								// Handle the response data here
+								fillCard(data.name, data.message, data.phone_number);
+							})
+							.catch(error => {
+								console.error('Error:', error);
+							})
+							
 							// Change the appearance of the polygon when clicked
 							polygon.setOptions({
 								fillColor: '#B2BEB5	',  // Change the fill color
 								strokeColor: '#36454F'  // Change the stroke color
 							});
+							if (selectedPolygon) {
+								// Reset the appearance of the previous active polygon
+								selectedPolygon.setOptions({
+									fillColor: originalFillColor,
+									strokeColor: originalStrokeColor
+								});
+							}
+							if (selectedPolygon == polygon) {
+								// If the clicked polygon is the same as the active polygon, remove the active polygon reference
+								selectedPolygon = null;
+							} else {
+								// Set the clicked polygon as the active polygon
+								selectedPolygon = polygon;
+							}
+						
+							
+
+							
+							
 
 							
 					
 							// Perform any other actions you want when the region is selected
+
+
 						});
                     });
                 })
@@ -142,7 +253,7 @@
             google.maps.event.addListener(drawingManager, 'polygoncomplete', function(polygon) {
                 // Handle the completed polygon here, e.g., store its coordinates
                 var polygonCoordinates = polygon.getPath().getArray();
-                console.log('Polygon coordinates:', polygonCoordinates);
+                
 
                 // Disable drawing mode after completing the polygon
                 drawingManager.setDrawingMode(null);
@@ -235,20 +346,20 @@ function sendPolygonToServer(protocol, message, phone, coordinates) {
     </script>
     <script>
         document.querySelectorAll('.add-more').forEach(function(button) {
-            button.addEventListener('click', function() {
-                // Clone the input field and append it to the container
-                var container = this.parentElement.parentElement.parentElement;
-                var inputGroup = this.parentElement.parentElement.cloneNode(true);
-                
-                // Remove the "Add More" button from the cloned input field
-                var addButton = inputGroup.querySelector('.add-more');
-                if (addButton) {
-                    addButton.remove();
-                }
-                
-                container.appendChild(inputGroup);
-            });
-        });
+			button.addEventListener('click', function() {
+				// Clone the input field and its container
+				var inputGroup = this.parentElement.parentElement.cloneNode(true);
+				
+				// Clear the input field value in the cloned input group
+				var inputField = inputGroup.querySelector('input[type="text"]');
+				if (inputField) {
+					inputField.value = '';
+				}
+				
+				// Append the cloned input field and its container to the parent container
+				this.parentElement.parentElement.parentElement.appendChild(inputGroup);
+			});
+		});
 </script>
 
 

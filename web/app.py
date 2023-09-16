@@ -11,6 +11,7 @@ from shapely.geometry import Point, Polygon
 load_dotenv()
 
 googlemaps_key = os.getenv('GOOGLE_MAPS_API_KEY')
+print(googlemaps_key)
 
 
 
@@ -136,17 +137,52 @@ def receive_location():
 def add():
     return render_template('add.html', googlemaps_key=googlemaps_key)
 
+# @app.route('/find_by_region', methods=['POST'])
+# def find_by_region():
+     
 
+		
 
 @app.route('/get_polygon_data', methods=['GET'])
 def get_polygon_data():
     # Get the polygon data from the database
     polygons = Location.query.all()
     output = []
+
     for polygon in polygons:
-         output.append(polygon.polyregion)
+        polygon_data = {
+            'id': polygon.id,
+            'polyregion': polygon.polyregion
+        }
+        output.append(polygon_data)
+    
     return jsonify(output), 200
 
+# recieves data about location id and returns the protocol and message
+@app.route('/get_protocol', methods=['POST'])
+def get_protocol():
+	try:
+		data = request.get_json()
+		location_id = data['location_id']
+		#find protocol which matches to location id
+		protocol = Protocols.query.filter_by(location_id = location_id).first()
+		print (protocol)
+		#find message which matches to protocol id
+		messages = [] 
+		for message in protocol.messages:
+			messages.append(str(message.message))
+		#find phone number which matches to protocol id
+		phone_numbers = []
+		for phone_number in protocol.phonetocall:
+			phone_numbers.append(str(phone_number.phone_number))
+		output = {
+			'name' : protocol.protocol,
+			'message' : messages,
+			'phone_number' : phone_numbers}
+		print(output)
+		return jsonify(output), 200
+	except Exception as e:
+		return jsonify({'error': str(e)}), 500
 
 @app.route('/save_polygon', methods=['POST'])
 def save_polygon():
