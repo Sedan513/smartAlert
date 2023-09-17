@@ -98,3 +98,16 @@
     
 </body>
 </html>
+
+
+
+client = Client('AC6afa4a770f4fce6477e24a74fc44789c', 'ce47946c104c538cb9e5f5d2bc1a3ff2')
+for number in temp[phone_number]:
+message = client.messages \
+  .create(
+      from_ = '+18449973963',
+      body = 'welcome to femboy hooters',
+      ##body = temp['message'],
+      ##to = number
+      to = '+16144464294'
+  )
