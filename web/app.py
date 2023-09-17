@@ -5,12 +5,13 @@ from flask_migrate import Migrate
 from flask import request, jsonify, render_template
 from dotenv import load_dotenv
 import os
+from twilio.rest import Client
+
+client = Client('AC6afa4a770f4fce6477e24a74fc44789c', 'ce47946c104c538cb9e5f5d2bc1a3ff2')
+
 
 load_dotenv()
-
 googlemaps_key = os.getenv('GOOGLE_MAPS_API_KEY')
-
-
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -65,6 +66,7 @@ class Messages(db.Model):
     message = db.Column(db.String(80))
     protocol_id = db.Column(db.Integer, db.ForeignKey('protocols.id', name = 'fk_protocol_id'))
     protocol = db.relationship('Protocols', backref=db.backref('messages', lazy='dynamic'))
+
 class PhonetoCall(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     phone_number = db.Column(db.String(80))
@@ -103,7 +105,7 @@ class PolyRegion(db.Model):
     def __repr__(self):
         return '<Area %r>' % self.area
      
-	
+
 @app.route('/locations', methods=['POST'])
 def receive_location():
     try:
@@ -116,7 +118,6 @@ def receive_location():
 
             output = []
 
-
             for hit in hits:
                 location = Location.query.get(hit)
                 for protocol in location.protocols:
@@ -125,21 +126,55 @@ def receive_location():
                             'message' : protocol.messages.message,
                             'phone_number' : protocol.phonetocall.phone_number
                      }
-                     output.append(temp)
-
-                
-
-
             return jsonify(output), 200
         else:
             return jsonify({'error': 'Invalid data format'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
+
 #an html page to add locations    
 @app.route('/add', methods=['GET'])
 def add():
     return render_template('add.html', googlemaps_key=googlemaps_key)
+
+
+
+
+
+@app.route('/sndtxt', methods = ['POST'])
+def sendText():
+    def receive_location():
+        try:
+            data = request.get_json()  # Parse JSON data from the request
+            if 'latitude' in data and 'longitude' in data:
+                latitude = data['latitude']
+                longitude = data['longitude']
+
+                hits = find_locations_in_radius(latitude, longitude)
+
+                output = []
+
+                for hit in hits:
+                    location = Location.query.get(hit)
+                    for protocol in location.protocols:
+                        temp = {
+                            'name' : protocol.protocol,
+                                'message' : protocol.messages.message,
+                                'phone_number' : protocol.phonetocall.phone_number
+                        }
+                        message = client.messages \
+                            .create(
+                            from_='+18449973963',
+                            body= temp["message"],
+                            to='+16144464294'
+     )
+                return jsonify(output), 200
+            else:
+                return jsonify({'error': 'Invalid data format'}), 400
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
 
 
 def haversine(lat1, lon1, lat2, lon2):
