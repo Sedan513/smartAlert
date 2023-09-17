@@ -7,12 +7,13 @@
     <!-- Add Bootstrap CSS link -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- Google Maps API script with your API key -->
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=drawing"></script>
+    
+
 </head>
 <body>
     <div class="container mt-5">
-        <h1 class="text-center">Regions
-        </h1>
+        <h1 class="text-center">Regions</h1>
         <!-- Bootstrap card for the map -->
         <div class="card">
             <div class="card-body">
@@ -20,49 +21,236 @@
                 <div id="map" style="height: 400px;"></div>
             </div>
         </div>
+        <button id="draw-region" class="btn btn-primary mt-3">Draw Region</button>
+        <!-- Button to save region (initially hidden) -->
+        <button id="save-region" class="btn btn-primary mt-3" disabled>Save Region</button>
+    
+        <!-- Bootstrap form for protocol name -->
+        <form id="region-form" class = "mt-3"style="display: none;">
+            <div class="form-group">
+                <label for="protocol-name">Protocol Name</label>
+                <input type="text" class="form-control" id="protocol-name" placeholder="Enter Protocol Name">
+            </div>
+            <div class="form-group">
+                <label for="messages">Messages</label>
+                <div id="messages-container">
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" placeholder="Enter Messages">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary add-more" type="button">Add More</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="phone-numbers">Phone Numbers</label>
+                <div id="phone-numbers-container">
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" placeholder="Enter Phone Numbers">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary add-more" type="button">Add More</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
 
     <script>
-        function initMap() {
-            var polygonCoordinates = [
-        { lat: 39.3287747, lng: -76.6221968 },
-        { lat: 39.3277954, lng: -76.6222934 },
-        { lat: 39.3277166, lng: -76.6210595 },
-        { lat: 39.3286419, lng: -76.6209469 },
-        { lat: 39.3287747, lng: -76.6221968 }
-    ];
-            // Customize the center and zoom level according to your needs
+        function initializeMap() {
             var map = new google.maps.Map(document.getElementById('map'), {
-                center: { lat: 39.3267701, lng: -76.6266571 }, // Default: San Francisco 39.3267701,
-                zoom: 15, // Adjust the zoom level
+                center: { lat: 39.3273, lng: -76.6221 },
+                zoom: 16
+            });
+    
+            // Fetch multiple sets of polygon data from your Flask endpoint
+            fetch('/get_polygon_data')
+                .then(response => response.json())
+                .then(polygonDataArray => {
+                    polygonDataArray.forEach(polygonData => {
+                        // Create an array to store the polygon's LatLng objects
+                        var polygonCoordinates = [];
+    
+                        // Convert the fetched data into LatLng objects
+                        polygonData.forEach(point => {
+                            polygonCoordinates.push(new google.maps.LatLng(point.lat, point.lng));
+                        });
+    
+                        // Create a polygon and set its path
+                        var polygon = new google.maps.Polygon({
+                            paths: polygonCoordinates,
+                            strokeColor: '#FF0000',
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                            fillColor: '#FF0000',
+                            fillOpacity: 0.35
+                        });
+
+						
+    
+                        // Set the polygon on the map
+                        polygon.setMap(map);
+						google.maps.event.addListener(polygon, 'click', function() {
+							// Change the appearance of the polygon when clicked
+							polygon.setOptions({
+								fillColor: '#B2BEB5	',  // Change the fill color
+								strokeColor: '#36454F'  // Change the stroke color
+							});
+
+							
+					
+							// Perform any other actions you want when the region is selected
+						});
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching polygon data:', error);
+                });
+
+                // Initialize the drawing manager
+            drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: null, // Initially set to null
+                drawingControl: false, // Hide the drawing control
+                drawingControlOptions: {
+                    drawingModes: [
+                        google.maps.drawing.OverlayType.POLYGON,
+                        google.maps.drawing.OverlayType.RECTANGLE // You can add more modes as needed
+                    ],
+                    position: google.maps.ControlPosition.TOP_LEFT // Adjust the control position
+                },
+                polygonOptions: {
+                    editable: true,
+                    draggable: true
+                }
             });
 
-            // Customize your map with markers, polygons, or other features here
-            // Example: Adding a marker
-            var marker = new google.maps.Marker({
-                position: { lat: 37.7749, lng: -122.4194 },
-                map: map,
-                title: 'Marker Title'
+            // Set the drawing manager on the map
+            drawingManager.setMap(map);
+
+            // Add an event listener to start drawing mode when the button is clicked
+            document.getElementById('draw-region').addEventListener('click', function() {
+                document.getElementById('save-region').disabled = false;
+                document.getElementById('draw-region').disabled = true;
+                document.getElementById('region-form').style.display = 'block';
+                drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+                drawingManager.setOptions({
+                    drawingControl: true // Show the drawing control
+                });
             });
 
-            var polygon = new google.maps.Polygon({
-                paths: polygonCoordinates,
-                strokeColor: '#FF0000', // Outline color
-                strokeOpacity: 0.8,
-                strokeWeight: 2,
-                fillColor: '#FF0000', // Fill color
-                fillOpacity: 0.35
-            });
+            // Add an event listener for when a polygon is completed
+            google.maps.event.addListener(drawingManager, 'polygoncomplete', function(polygon) {
+                // Handle the completed polygon here, e.g., store its coordinates
+                var polygonCoordinates = polygon.getPath().getArray();
+                console.log('Polygon coordinates:', polygonCoordinates);
 
-            polygon.setMap(map);
+                // Disable drawing mode after completing the polygon
+                drawingManager.setDrawingMode(null);
+            });
+            var drawnPolygons = [];
+
+            // Create a variable to store the currently active polygon
+        var activePolygon = null;
+
+// Add an event listener for when a polygon is completed
+            google.maps.event.addListener(drawingManager, 'polygoncomplete', function(polygon) {
+    // Get the polygon's coordinates
+    var polygonCoordinates = polygon.getPath().getArray();
+
+    // Store the polygon's coordinates in the array
+    drawnPolygons.push(polygonCoordinates);
+
+    // Disable drawing mode after completing the polygon
+    drawingManager.setDrawingMode(null);
+
+    // Set the completed polygon as the active polygon
+    activePolygon = polygon;
+});
+
+// Add an event listener for the button click
+document.getElementById('save-region').addEventListener('click', function() {
+    // Check if there is an active polygon to send
+    if (activePolygon) {
+        // Get the coordinates of the active polygon
+        var coordinates = activePolygon.getPath().getArray();
+
+        // Get the protocol name from the input field
+        var protocol = document.getElementById('protocol-name').value;
+
+        // Get the messages from the input fields
+        var messages = [];
+        document.querySelectorAll('#messages-container input').forEach(function(input) {
+            messages.push(input.value);
+        });
+
+        // Get the phone numbers from the input fields
+
+        var phoneNumbers = [];
+        document.querySelectorAll('#phone-numbers-container input').forEach(function(input) {
+            phoneNumbers.push(input.value);
+        });
+
+        // Send the polygon data to the Flask server
+        sendPolygonToServer(protocol, messages, phoneNumbers, coordinates);
+        //refresh page 
+    location.reload();
+    // alert user that region has been saved
+    alert("Region has been saved");
+    } else {
+        alert('No active polygon to send.');
+    }
+    
+});
+
+// Function to send the polygon data to the Flask server
+function sendPolygonToServer(protocol, message, phone, coordinates) {
+    // Create a JSON object with the desired structure
+    var jsonData = {
+        protocol: protocol,
+        message: message,
+        phone: phone,
+        coordinates: coordinates
+    };
+
+    fetch('/save_polygon', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(jsonData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Polygon data sent to server:', data);
+        // You can handle the server's response here if needed
+    })
+    .catch(error => {
+        console.error('Error sending polygon data:', error);
+    });
+}
+    
         }
-
-        
-        
-
-        // Initialize the map when the page loads
-        google.maps.event.addDomListener(window, 'load', initMap);
+    
+        google.maps.event.addDomListener(window, 'load', initializeMap);
     </script>
+    <script>
+        document.querySelectorAll('.add-more').forEach(function(button) {
+            button.addEventListener('click', function() {
+                // Clone the input field and append it to the container
+                var container = this.parentElement.parentElement.parentElement;
+                var inputGroup = this.parentElement.parentElement.cloneNode(true);
+                
+                // Remove the "Add More" button from the cloned input field
+                var addButton = inputGroup.querySelector('.add-more');
+                if (addButton) {
+                    addButton.remove();
+                }
+                
+                container.appendChild(inputGroup);
+            });
+        });
+</script>
+
 
     <!-- Add Bootstrap JS and jQuery (required for Bootstrap) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
