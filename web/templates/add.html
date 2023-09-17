@@ -8,13 +8,13 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- Google Maps API script with your API key -->
     <script src="https://maps.googleapis.com/maps/api/js?key={{ googlemaps_key }}&libraries=drawing"></script>
-	<script> function fillCard(protocolName, messages, phoneNumbers) {
+	<script> function fillCard(protocolName, messages, phoneNumbers, phoneNumberNames) {
 		// Get references to the span elements where you want to display values
 		var protocolNameSpan = document.getElementById("display-protocol-name");
 		var messagesList = document.getElementById("display-messages");
 		var phoneNumbersList = document.getElementById("display-phone-numbers");
-
-		// display the card
+	
+		// Display the card
 		document.querySelector('#bottomend').style.display = 'block';
 	
 		// Set the values you want to display
@@ -32,14 +32,14 @@
 					messagesList.removeChild(messagesList.firstChild);
 				}
 			}
-			messages.forEach(function(message) {
+			messages.forEach(function (message) {
 				var listItem = document.createElement("li");
 				listItem.textContent = message;
 				messagesList.appendChild(listItem);
 			});
 		}
 	
-		// Fill the Phone Numbers list
+		// Fill the Phone Numbers list with names and numbers
 		if (phoneNumbersList) {
 			if (phoneNumbersList.hasChildNodes()) {
 				// Remove all the existing list items
@@ -47,9 +47,11 @@
 					phoneNumbersList.removeChild(phoneNumbersList.firstChild);
 				}
 			}
-			phoneNumbers.forEach(function(phoneNumber) {
+			phoneNumbers.forEach(function (phoneNumber, index) {
 				var listItem = document.createElement("li");
-				listItem.textContent = phoneNumber;
+
+				var phoneNumberName = phoneNumberNames[index]; // Get the corresponding phone number name
+				listItem.innerHTML = `<strong>${phoneNumberName}:</strong> ${phoneNumber}`;
 				phoneNumbersList.appendChild(listItem);
 			});
 		}
@@ -88,7 +90,7 @@
                     <div class="input-group mb-2">
                         <input type="text" class="form-control" placeholder="Enter Messages">
                         <div class="input-group-append">
-                            <button class="btn btn-outline-secondary add-more-messages" type="button">Add More</button>
+                            <button class="btn btn-outline-secondary add-more" type="button">Add More</button>
                         </div>
                     </div>
                 </div>
@@ -97,17 +99,21 @@
                 <label for="phone-numbers">Phone Numbers</label>
                 <div class="row">
                     <div class="col-md-4 mb-2">
+						<div id = "phone-numbers-container">
                         <div class="input-group">
                             <input type="text" class="form-control" placeholder="Enter Phone Number">
                         </div>
+						</div>
                     </div>
                     <div class="col-md-8 mb-2">
+						<div id = "phone-name-container">
                         <div class="input-group">
                             <input type="text" class="form-control" placeholder="Enter Number Name">
                             <div class="input-group-append">
-                                <button class="btn btn-outline-secondary add-more-phone-numbers" type="button">Add More</button>
+                                <button class="btn btn-outline-secondary add-more" type="button">Add More</button>
                             </div>
                         </div>
+						</div>
                     </div>
                 </div>
             </div>
@@ -115,7 +121,7 @@
             
         </form>
 
-		<div id = "bottomend" class="card mt-3" style="display: none;">
+		<div id="bottomend" class="card mt-3" style="display: none;">
 			<div class="card-body">
 				<h5 class="card-title">Protocol Information</h5>
 				<p class="card-text">
@@ -123,7 +129,11 @@
 					<strong>Messages:</strong>
 					<ul id="display-messages"></ul><br>
 					<strong>Phone Numbers:</strong>
-					<ul id="display-phone-numbers"></ul>
+					<ul id="display-phone-numbers">
+						<!-- Include labels for phone numbers here -->
+						
+						<!-- Add more labels as needed -->
+					</ul>
 				</p>
 			</div>
 		</div>
@@ -184,7 +194,7 @@
 							.then(response => response.json())
 							.then(data => {
 								// Handle the response data here
-								fillCard(data.name, data.message, data.phone_number);
+								fillCard(data.name, data.message, data.phone_number, data.phone_number_name);
 							})
 							.catch(error => {
 								console.error('Error:', error);
@@ -209,13 +219,6 @@
 								// Set the clicked polygon as the active polygon
 								selectedPolygon = polygon;
 							}
-						
-							
-
-							
-							
-
-							
 					
 							// Perform any other actions you want when the region is selected
 
@@ -310,8 +313,13 @@ document.getElementById('save-region').addEventListener('click', function() {
             phoneNumbers.push(input.value);
         });
 
+		var phoneNumberNames = [];
+		document.querySelectorAll('#phone-name-container input').forEach(function(input) {
+			phoneNumberNames.push(input.value);
+		});
+
         // Send the polygon data to the Flask server
-        sendPolygonToServer(protocol, messages, phoneNumbers, coordinates);
+        sendPolygonToServer(protocol, messages, phoneNumbers, coordinates, phoneNumberNames);
         //refresh page 
     location.reload();
     // alert user that region has been saved
@@ -323,12 +331,13 @@ document.getElementById('save-region').addEventListener('click', function() {
 });
 
 // Function to send the polygon data to the Flask server
-function sendPolygonToServer(protocol, message, phone, coordinates) {
+function sendPolygonToServer(protocol, message, phone, coordinates, phoneName) {
     // Create a JSON object with the desired structure
     var jsonData = {
         protocol: protocol,
         message: message,
         phone: phone,
+		phoneName: phoneName,
         coordinates: coordinates
     };
 

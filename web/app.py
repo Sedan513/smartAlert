@@ -8,6 +8,9 @@ import math
 import json
 import os
 from shapely.geometry import Point, Polygon
+from twilio.rest import Client
+
+client = Client
 load_dotenv()
 
 googlemaps_key = os.getenv('GOOGLE_MAPS_API_KEY')
@@ -82,15 +85,41 @@ class PhonetoCall(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     phone_number = db.Column(db.String(80))
     protocol_id = db.Column(db.Integer, db.ForeignKey('protocols.id', name = 'fk_protocol_id'))
+    number_name = db.Column(db.String(80))
     protocol = db.relationship('Protocols', backref=db.backref('phonetocall', lazy='dynamic'))
 
-    def __init__(self, phone_number, protocol):
+    def __init__(self, phone_number, protocol, number_name):
         self.phone_number = phone_number
         self.protocol = protocol
+        self.number_name = number_name
 
     def __repr__(self):
         return '<PhonetoCall %r>' % self.phone_number
-     
+@app.route('/sebs', methods=['POST'])
+def sebs():
+     #recieves protocol id and then calls based off fo those ids
+    try:
+        data = request.get_json()
+        protocol_id = data['protocol_id']
+          #find protocol which matches to location id
+        protocol = Protocols.query.filter_by(id = protocol_id).first()
+        messages = []
+        for message in protocol.messages:
+               messages.append(str(message.message))
+        phone_numbers = []
+        for phone_number in protocol.phonetocall:
+            phone_numbers.append(str(phone_number.phone_number))
+        for phone_number in phone_numbers:
+                for message in messages:
+                    client.messages.create(to=phone_number, from_="+12056273398", body=message)
+
+        return jsonify({'message': 'success'}), 200
+    except Exception as e:
+         return jsonify({'error': str(e)}), 500
+                
+          
+          
+               
 	
 @app.route('/locations', methods=['POST'])
 def receive_location():
@@ -116,11 +145,16 @@ def receive_location():
                      phone_numbers = []
                      for phone_number in protocol.phonetocall:
                          phone_numbers.append(str(phone_number.phone_number))
+                     phone_number_names = []
+                     for phone_number_name in protocol.phonetocall:
+                         phone_number_names.append(str(phone_number_name.number_name))
                     
                      temp = {
                         'name' : protocol.protocol,
+                        'protocol_id' : protocol.id, #added protocol id to return to app.py
                         'message' : messages,
-                        'phone_number' : phone_numbers}
+                        'phone_number' : phone_numbers,
+                        'phone_number_name' : phone_number_names}
                      output.append(temp)
 
                 
@@ -173,12 +207,17 @@ def get_protocol():
 			messages.append(str(message.message))
 		#find phone number which matches to protocol id
 		phone_numbers = []
+        
 		for phone_number in protocol.phonetocall:
 			phone_numbers.append(str(phone_number.phone_number))
+		phone_number_names = []
+		for phone_number_name in protocol.phonetocall:
+			phone_number_names.append(str(phone_number_name.number_name))       
 		output = {
 			'name' : protocol.protocol,
 			'message' : messages,
-			'phone_number' : phone_numbers}
+			'phone_number' : phone_numbers,
+            'phone_number_name' : phone_number_names}
 		print(output)
 		return jsonify(output), 200
 	except Exception as e:
@@ -186,6 +225,7 @@ def get_protocol():
 
 @app.route('/save_polygon', methods=['POST'])
 def save_polygon():
+	print ("save_polygon")
 	try:
 		data = request.get_json()
 		print(data)
@@ -216,9 +256,18 @@ def save_polygon():
 			messages = Messages(message = message, protocol = protocol)
 			db.session.add(messages)
         #create new phone number  
+		numbernames = data['phoneName']
+		int = 0
 		for phone_number in data['phone']:
-			phone = PhonetoCall(phone_number = phone_number, protocol = protocol)
+            #match phone number to phone number name 
+			if int >= len(numbernames):
+				current_name = " "
+			else:
+				current_name = numbernames[int]
+			print(current_name)
+			phone = PhonetoCall(phone_number = phone_number, protocol = protocol, number_name = current_name)
 			db.session.add(phone)
+			int += 1
         
      
 		db.session.add(location)
