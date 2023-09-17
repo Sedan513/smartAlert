@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:smartalert_ui/location_api.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProtocolScreen extends StatefulWidget {
   final List<dynamic> infoMap;
+  late int protocolID;
 
-  const ProtocolScreen({super.key, required this.infoMap});
+  ProtocolScreen({super.key, required this.infoMap}) {
+    print("\n\n\n\n\n pocean eyes");
+    protocolID = infoMap[0]['protocol_id'];
+    LocationApi.sendButtonPressed(protocolID);
+  }
 
   @override
   _ProtocolScreenState createState() => _ProtocolScreenState();
@@ -44,6 +50,8 @@ class _ProtocolScreenState extends State<ProtocolScreen> {
                       margin: const EdgeInsets.symmetric(
                           vertical: 8.0, horizontal: 0.0),
                       child: ProtocolCallButton(
+                          contactName: protocol['phone_number_name']
+                              [index - protocol['message'].length],
                           phone: protocol['phone_number']
                                   [index - protocol['message'].length]
                               .toString()));
@@ -59,8 +67,10 @@ class _ProtocolScreenState extends State<ProtocolScreen> {
 
 class ProtocolCallButton extends StatelessWidget {
   final String phone; // Add a parameter for the phone number.
+  final String contactName;
 
-  const ProtocolCallButton({super.key, required this.phone});
+  const ProtocolCallButton(
+      {super.key, required this.phone, required this.contactName});
 
   _launchPhoneDialer() async {
     final Uri uri = Uri.parse('tel:$phone');
@@ -82,7 +92,7 @@ class ProtocolCallButton extends StatelessWidget {
           alignment: Alignment.centerRight,
           child: ListTile(
             title: Text(
-              'Dial $phone',
+              contactName,
               style: const TextStyle(
                 fontSize: 18, // Adjust the font size as needed
                 fontFamily: 'Verdana', // Replace with your desired font family
@@ -90,9 +100,9 @@ class ProtocolCallButton extends StatelessWidget {
                 color: Colors.blue, // Adjust text color as needed
               ),
             ),
-            subtitle: const Text(
-              'Tap to dial',
-              style: TextStyle(
+            subtitle: Text(
+              phone,
+              style: const TextStyle(
                 fontSize: 14, // Adjust the font size as needed
                 fontFamily: 'Verdana', // Replace with your desired font family
                 fontWeight: FontWeight.normal, // Adjust font weight as needed

@@ -20,6 +20,11 @@ class _ButtonPageState extends State<ButtonPage> {
   bool buttonPressed = false;
   LocationData? _locationData; // Store the location data here
   List<dynamic>? protocolJson; // Store the json data here
+  Map<String, List<dynamic>> emergencyIncidents = {
+    'Medical': [0, 'assets/medical_button.png'],
+    'Security': [1, 'assets/security_button.png'],
+    'Fire': [2, 'assets/fire_button.png'],
+  };
 
   @override
   void initState() {
@@ -92,14 +97,22 @@ class _ButtonPageState extends State<ButtonPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (_locationData != null)
-                    Text(
-                      'Latitude: ${_locationData!.latitude}, Longitude: ${_locationData!.longitude}',
-                      style: const TextStyle(color: Colors.white),
+                    TextButton(
+                      onPressed: updateui,
+                      child: Image.asset(
+                        emergencyIncidents['Medical']![1],
+                      ),
                     ),
                   TextButton(
                     onPressed: updateui,
                     child: Image.asset(
-                      'assets/button_image.png',
+                      emergencyIncidents['Security']![1],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: updateui,
+                    child: Image.asset(
+                      emergencyIncidents['Fire']![1],
                     ),
                   ),
                 ],
